@@ -32,6 +32,7 @@
             padding: 50px;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
         }
         h1 {
             color: var(--primary-color);
@@ -50,108 +51,10 @@
             margin: 20px auto 0;
             border-radius: 2px;
         }
-        form {
-            margin-top: 40px;
-        }
-        label {
-            display: block;
-            margin-bottom: 12px;
-            font-weight: bold;
-            color: var(--primary-color);
-            font-size: 1.2em;
-            transition: all 0.3s ease;
-        }
-        input[type="text"], input[type="email"], select {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 25px;
-            border: 2px solid #E0E0E0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background-color: #FFFFFF;
-        }
-        input[type="text"]:focus, input[type="email"]:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 15px rgba(108, 99, 255, 0.2);
-        }
-        select {
-            appearance: none;
-            background-image: url('data:image/svg+xml;utf8,<svg fill="%236C63FF" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-            background-repeat: no-repeat;
-            background-position: right 15px top 50%;
-            background-size: 20px auto;
-        }
-        input[type="submit"] {
-            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 18px 30px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 20px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            display: block;
-            width: 100%;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            position: relative;
-            overflow: hidden;
-        }
-        input[type="submit"]::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: all 0.5s;
-        }
-        input[type="submit"]:hover::before {
-            left: 100%;
-        }
-        input[type="submit"]:hover {
-            box-shadow: 0 8px 25px rgba(108, 99, 255, 0.3);
-            transform: translateY(-3px);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgb(0,0,0);
-            background-color: rgba(0,0,0,0.4);
-            padding-top: 60px;
-        }
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-            border-radius: 10px;
-            text-align: center;
-            color: #6C63FF;
-        }
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
+        .message {
+            font-size: 1.5em;
+            color: var(--accent-color);
+            margin-top: 30px;
         }
         @media (max-width: 600px) {
             .container {
@@ -160,119 +63,18 @@
             h1 {
                 font-size: 2.5em;
             }
+            .message {
+                font-size: 1.2em;
+            }
         }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDAw3LKSDHHwasOhN0l63lO4I-AO1xeGGU",
-            authDomain: "tmjh113.firebaseapp.com",
-            projectId: "tmjh113",
-            storageBucket: "tmjh113.appspot.com",
-            messagingSenderId: "936878916477",
-            appId: "1:936878916477:web:cbff479db9898b0a218214",
-            measurementId: "G-J5WT01ZLBD"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        function getRandomCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let code = '';
-            for (let i = 0; i < 5; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return code;
-        }
-
-        async function getIp() {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            return data.ip;
-        }
-
-        async function handleSubmit(event) {
-            event.preventDefault();
-            const name = document.getElementById('name').value;
-            const username = document.getElementById('username').value;
-            const grade = document.getElementById('grade').value;
-            const className = document.getElementById('class').value;
-            const ip = await getIp();
-            const code = getRandomCode();
-
-            await db.collection('registrations').add({
-                name,
-                username,
-                grade,
-                class: className,
-                ip,
-                code,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-                document.getElementById('modal-code').innerText = `您的報名代碼: ${code} 請截圖參賽時會用到`;
-                document.getElementById('myModal').style.display = "block";
-        }
-
-        function closeModal() {
-            document.getElementById('myModal').style.display = "none";
-        }
-    </script>
 </head>
 <body>
     <div class="container">
         <h1>乾淨天中傳說對決報名賽</h1>
-        <form action="#" method="post" onsubmit="handleSubmit(event)">
-            <label for="name">姓名：</label>
-            <input type="text" id="name" name="name" required placeholder="請輸入您的姓名">
-
-            <label for="username">遊戲用戶名：</label>
-            <input type="text" id="username" name="username" required placeholder="請輸入您的遊戲用戶名">
-
-            <label for="grade">年級：</label>
-            <select id="grade" name="grade" required>
-                <option value="">請選擇年級</option>
-                <option value="7">七年級</option>
-                <option value="8">八年級</option>
-                <option value="9">九年級</option>
-            </select>
-
-            <label for="class">班級：</label>
-            <select id="class" name="class" required>
-                <option value="">請選擇班級</option>
-                <option value="1">1班</option>
-                <option value="2">2班</option>
-                <option value="3">3班</option>
-                <option value="4">4班</option>
-                <option value="5">5班</option>
-                <option value="6">6班</option>
-                <option value="7">7班</option>
-                <option value="8">8班</option>
-                <option value="9">9班</option>
-                <option value="10">10班</option>
-                <option value="11">11班</option>
-                <option value="12">12班</option>
-                <option value="13">13班</option>
-                <option value="14">14班</option>
-                <option value="15">15班</option>
-                <option value="16">16班</option>
-                <option value="17">17班</option>
-                <option value="18">18班</option>
-                <option value="19">19班</option>
-            </select>
-
-            <input type="submit" value="提交報名">
-        </form>
-    </div>
-
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <p id="modal-code"></p>
+        <div class="message">
+            <p>報名已經結束，感謝您的關注！</p>
+            <p>請關注後續比賽公告。</p>
         </div>
     </div>
 </body>
