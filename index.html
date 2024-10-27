@@ -3,78 +3,392 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用戶資料</title>
+    <title>5v5 比賽倒計時</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes shine {
+            0% { background-position: -100% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(255,215,0,0.2); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.6); }
+            100% { box-shadow: 0 0 5px rgba(255,215,0,0.2); }
+        }
+
+        @keyframes borderGlow {
+            0% { border-color: rgba(255,255,255,0.3); }
+            50% { border-color: rgba(255,255,255,0.8); }
+            100% { border-color: rgba(255,255,255,0.3); }
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f0f4f8;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(-45deg, #0f0f1e, #1a1a3a, #1e1e2e, #2a2a4a);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: white;
         }
+        
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+            padding: 20px;
         }
-        h1 {
+
+        .title {
             text-align: center;
-            color: #2c3e50;
-            margin-bottom: 30px;
+            font-size: 3.5em;
+            margin: 20px 0;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5),
+                         0 0 20px rgba(255,255,255,0.3),
+                         0 0 30px rgba(255,255,255,0.2);
+            letter-spacing: 5px;
+            position: relative;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+        }
+        
+        .countdown {
+            text-align: center;
             font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            padding: 30px;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            animation: glow 2s infinite, borderGlow 2s infinite;
         }
-        .search-bar {
+        
+        .teams {
             display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            margin-top: 40px;
+            gap: 40px;
+            perspective: 1000px;
         }
-        .search-bar input {
-            width: 300px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
+        
+        .team {
+            flex: 1;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .user-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
-            padding-right: 15px;
+
+        .team::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transition: 0.5s;
         }
-        .user-item {
-            background-color: #e9ecef;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+
+        .team:hover::before {
+            left: 100%;
+        }
+
+        .team:hover {
+            transform: translateY(-10px) rotateX(5deg);
+        }
+        
+        .team-title {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .team-blue .team-title {
+            color: #4a9eff;
+            text-shadow: 0 0 10px rgba(74, 158, 255, 0.5),
+                         0 0 20px rgba(74, 158, 255, 0.3);
+        }
+
+        .team-red .team-title {
+            color: #ff4a4a;
+            text-shadow: 0 0 10px rgba(255, 74, 74, 0.5),
+                         0 0 20px rgba(255, 74, 74, 0.3);
+        }
+
+        .team-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: currentColor;
+            border-radius: 2px;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .player {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.3em;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
         }
-        .user-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+
+        .player::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transform: skewX(-45deg);
+            top: 0;
+            left: -200%;
+            transition: 0.5s;
         }
-        .user-item p {
-            margin: 5px 0;
-            font-size: 0.9em;
+
+        .player:hover::before {
+            left: 200%;
+        }
+        
+        .player:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .team-blue .player {
+            border-left: 4px solid #4a9eff;
+            color: #bfe6ff;
+        }
+
+        .team-red .player {
+            border-left: 4px solid #ff4a4a;
+            color: #ffbfbf;
+        }
+        
+        .vs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5),
+                         0 0 20px rgba(255, 215, 0, 0.3);
+            animation: float 3s ease-in-out infinite;
+            position: relative;
+            padding: 20px;
+        }
+
+        .vs::before, .vs::after {
+            content: '⚔️';
+            position: absolute;
+            font-size: 0.5em;
+        }
+
+        .vs::before {
+            top: -20px;
+            transform: rotate(-45deg);
+        }
+
+        .vs::after {
+            bottom: -20px;
+            transform: rotate(45deg);
+        }
+
+        .countdown-section {
+            display: inline-block;
+            margin: 0 15px;
+            min-width: 120px;
+            position: relative;
+        }
+
+        .countdown-section::after {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 30px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .countdown-section:last-child::after {
+            display: none;
+        }
+
+        .countdown-amount {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+
+        .countdown-period {
+            font-size: 0.6em;
+            text-transform: uppercase;
+            color: #fff;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .match-info {
+            text-align: center;
+            margin: 30px auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            font-size: 1.4em;
+            color: #ffd700;
+            max-width: 600px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .match-info i {
+            margin-right: 10px;
+            animation: float 2s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        .player-number {
+            position: absolute;
+            left: 15px;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .player-info {
+            margin-top: 10px;
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .teams {
+                flex-direction: column;
+            }
+            .vs {
+                margin: 20px 0;
+                font-size: 2.5em;
+            }
+            .countdown {
+                font-size: 1.8em;
+                padding: 15px;
+            }
+            .team {
+                padding: 20px;
+            }
+            .title {
+                font-size: 2.5em;
+            }
+            .countdown-section {
+                min-width: 80px;
+                margin: 0 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>用戶資料</h1>
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="輸入代號搜尋" oninput="filterUsers()">
+        <h1 class="title">5V5 競技賽</h1>
+        
+        <div class="match-info">
+            <i class="fas fa-trophy"></i> 比賽時間：今天 20:00
         </div>
-        <div class="user-list" id="userList"></div>
+
+        <div class="countdown" id="countdown">
+            倒計時載入中...
+        </div>
+        
+        <div class="teams">
+            <div class="team team-blue">
+                <div class="team-title">
+                    <i class="fas fa-shield-alt"></i> 藍隊
+                </div>
+                <div class="player" id="b0m68"><span class="player-number">#1</span>b0m68</div>
+                <div class="player" id="Ex7sq"><span class="player-number">#2</span>Ex7sq</div>
+                <div class="player" id="Yib9s"><span class="player-number">#3</span>Yib9s</div>
+                <div class="player" id="j0vXw"><span class="player-number">#4</span>j0vXw</div>
+                <div class="player" id="PRlj8"><span class="player-number">#5</span>PRlj8</div>
+            </div>
+            
+            <div class="vs">VS</div>
+            
+            <div class="team team-red">
+                <div class="team-title">
+                    <i class="fas fa-fire"></i> 紅隊
+                </div>
+                <div class="player" id="Kpd6Q"><span class="player-number">#1</span>Kpd6Q</div>
+                <div class="player" id="sug8Q"><span class="player-number">#2</span>sug8Q</div>
+                <div class="player" id="7Mvne"><span class="player-number">#3</span>7Mvne</div>
+                <div class="player" id="mZeoJ"><span class="player-number">#4</span>mZeoJ</div>
+                <div class="player" id="zjr1t"><span class="player-number">#5</span>zjr1t</div>
+            </div>
+        </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDAw3LKSDHHwasOhN0l63lO4I-AO1xeGGU",
@@ -88,39 +402,69 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        async function loadUsers() {
-            const userList = document.getElementById('userList');
-            const usersSnapshot = await db.collection('registrations').get();
+        async function loadPlayerInfo() {
+            const players = document.querySelectorAll('.player');
             
-            usersSnapshot.forEach(doc => {
-                const userData = doc.data();
-                const userElement = document.createElement('div');
-                userElement.className = 'user-item';
-                userElement.id = userData.code;
-                userElement.innerHTML = `
-                    <p><strong>代號：</strong>${userData.code}</p>
-                    <p><strong>姓名：</strong>${userData.name}</p>
-                    <p><strong>遊戲名稱：</strong>${userData.username || '未設定'}</p>
-                `;
-                userList.appendChild(userElement);
-            });
-        }
-
-        function filterUsers() {
-            const searchInput = document.getElementById('searchInput').value.toLowerCase();
-            const userItems = document.querySelectorAll('.user-item');
-            
-            userItems.forEach(item => {
-                const code = item.id.toLowerCase();
-                if (code.includes(searchInput)) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
+            for(let player of players) {
+                const code = player.id;
+                try {
+                    const querySnapshot = await db.collection('registrations')
+                        .where('code', '==', code)
+                        .get();
+                    
+                    if (!querySnapshot.empty) {
+                        const userData = querySnapshot.docs[0].data();
+                        const playerInfo = document.createElement('div');
+                        playerInfo.className = 'player-info';
+                        playerInfo.innerHTML = `
+                            ${userData.name}<br>
+                            ${userData.username || ''}
+                        `;
+                        player.appendChild(playerInfo);
+                    }
+                } catch (error) {
+                    console.error('讀取玩家資料時發生錯誤：', error);
                 }
-            });
+            }
         }
 
-        loadUsers();
+        function updateCountdown() {
+            const targetDate = new Date();
+            targetDate.setHours(20, 0, 0, 0);
+            
+            const now = new Date();
+            const difference = targetDate - now;
+            
+            const hours = Math.floor(difference / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+            
+            const countdownHTML = `
+                <div class="countdown-section">
+                    <div class="countdown-amount">${hours}</div>
+                    <div class="countdown-period">小時</div>
+                </div>
+                <div class="countdown-section">
+                    <div class="countdown-amount">${minutes}</div>
+                    <div class="countdown-period">分鐘</div>
+                </div>
+                <div class="countdown-section">
+                    <div class="countdown-amount">${seconds}</div>
+                    <div class="countdown-period">秒</div>
+                </div>
+            `;
+            
+            if (difference < 0) {
+                document.getElementById('countdown').innerHTML = '<div class="countdown-amount">比賽已開始！🏆</div>';
+                return;
+            }
+            
+            document.getElementById('countdown').innerHTML = countdownHTML;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        loadPlayerInfo();
     </script>
 </body>
 </html>
